@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-
-import os
-import sys
-import glob
 from setuptools import setup
 
 
@@ -20,6 +16,9 @@ setup(
     description='Dictionary-style access to different types of models.',
     packages=['durabledict'],
     zip_safe=False,
+    install_requires=[
+        'six',
+    ],
     tests_require=[
         'Django',
         'nose',
