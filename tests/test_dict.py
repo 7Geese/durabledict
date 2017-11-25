@@ -1,21 +1,19 @@
 # coding=utf-8
+from __future__ import absolute_import, division, print_function, unicode_literals
 
+import threading
 import unittest
-import mock
-
-from redis import Redis
-from durabledict import RedisDict, ModelDict, MemoryDict, ZookeeperDict
-from tests.models import Setting
-
 from contextlib import contextmanager
 
 import django.core.management
+import mock
 from django.core.cache.backends.locmem import LocMemCache
-
 from kazoo.testing.harness import KazooTestCase
+from redis import Redis
+from six.moves import _thread
+from tests.models import Setting
 
-import threading
-import thread
+from durabledict import MemoryDict, ModelDict, RedisDict, ZookeeperDict
 
 
 class BaseTest(object):
@@ -33,20 +31,20 @@ class BaseTest(object):
         return "durabledict.%s.%s" % (self.dict_class, method)
 
     def assertDictAndPersistantsHave(self, **kwargs):
-        self.assertEquals(self.dict, kwargs)
-        self.assertEquals(self.dict.durables(), kwargs)
+        self.assertEqual(self.dict, kwargs)
+        self.assertEqual(self.dict.durables(), kwargs)
 
     def test_acts_like_a_dictionary(self):
         self.dict['foo'] = 'bar'
-        self.assertEquals(self.dict['foo'], 'bar')
+        self.assertEqual(self.dict['foo'], 'bar')
         self.dict['foo2'] = 'bar2'
-        self.assertEquals(self.dict['foo2'], 'bar2')
+        self.assertEqual(self.dict['foo2'], 'bar2')
 
     def test_updates_dict_keys(self):
         self.dict['foo'] = 'bar'
-        self.assertEquals(self.dict['foo'], 'bar')
+        self.assertEqual(self.dict['foo'], 'bar')
         self.dict['foo'] = 'newbar'
-        self.assertEquals(self.dict['foo'], 'newbar')
+        self.assertEqual(self.dict['foo'], 'newbar')
 
     def test_raises_keyerror_on_bad_access(self):
         self.dict['foo'] = 'bar'
@@ -60,16 +58,16 @@ class BaseTest(object):
             pv.assert_called_with('foo', 'bar')
 
     def test_can_save_and_retrieve_complex_objects(self):
-        complex_vars = ('tuple', 'fun', 1.0, [1, 2, 3, 4], u'☃')
+        complex_vars = ('tuple', 'fun', 1.0, [1, 2, 3, 4], '☃')
         self.dict['foo'] = complex_vars
 
-        self.assertEquals(complex_vars, self.dict['foo'])
-        self.assertEquals(dict(foo=complex_vars), self.dict.durables())
+        self.assertEqual(complex_vars, self.dict['foo'])
+        self.assertEqual(dict(foo=complex_vars), self.dict.durables())
 
-        self.assertEquals(self.dict.setdefault('foo', complex_vars), complex_vars)
-        self.assertEquals(self.dict.setdefault('bazzle', 'fuzzle'), 'fuzzle')
+        self.assertEqual(self.dict.setdefault('foo', complex_vars), complex_vars)
+        self.assertEqual(self.dict.setdefault('bazzle', 'fuzzle'), 'fuzzle')
 
-        self.assertEquals(self.dict.pop('foo'), complex_vars)
+        self.assertEqual(self.dict.pop('foo'), complex_vars)
 
     def test_setdefault_works_and_persists_correctly(self):
         self.assertFalse(self.dict.get('foo'))
@@ -78,7 +76,7 @@ class BaseTest(object):
         self.assertTrue(self.dict.setdefault('foo', 'notset'), 'bar')
 
         self.assertDictAndPersistantsHave(foo='bar')
-        self.assertEquals(self.dict['foo'], 'bar')
+        self.assertEqual(self.dict['foo'], 'bar')
 
     def test_delitem_calls_depersist(self):
         self.dict['foo'] = 'bar'
@@ -90,7 +88,7 @@ class BaseTest(object):
     def test_uses_existing_durables_on_initialize(self):
         with mock.patch(self.mockmeth('durables')) as p:
             p.return_value = dict(a=1, b=2, c=3)
-            self.assertEquals(self.new_dict(), dict(a=1, b=2, c=3))
+            self.assertEqual(self.new_dict(), dict(a=1, b=2, c=3))
 
     def test_last_updated_setup_on_intialize(self):
         self.assertTrue(self.dict.last_updated())
@@ -116,28 +114,28 @@ class BaseTest(object):
         self.dict['buz'] = 'buffle'
         self.assertDictAndPersistantsHave(foo='bar', buz='buffle')
 
-        self.assertEquals(self.dict.pop('buz', 'keynotfound'), 'buffle')
+        self.assertEqual(self.dict.pop('buz', 'keynotfound'), 'buffle')
         self.assertDictAndPersistantsHave(foo='bar')
 
-        self.assertEquals(self.dict.pop('junk', 'keynotfound'), 'keynotfound')
+        self.assertEqual(self.dict.pop('junk', 'keynotfound'), 'keynotfound')
         self.assertDictAndPersistantsHave(foo='bar')
 
-        self.assertEquals(self.dict.pop('foo'), 'bar')
+        self.assertEqual(self.dict.pop('foo'), 'bar')
         self.assertDictAndPersistantsHave()
 
-        self.assertEquals(self.dict.pop('no_more_keys', 'default'), 'default')
+        self.assertEqual(self.dict.pop('no_more_keys', 'default'), 'default')
         self.assertRaises(KeyError, self.dict.pop, 'no_more_keys')
 
     def test_get_works_correctly(self):
         self.dict['foo'] = 'bar'
-        self.assertEquals('bar', self.dict.get('foo'))
-        self.assertEquals('default', self.dict.get('junk', 'default'))
-        self.assertEquals(None, self.dict.get('junk'))
+        self.assertEqual('bar', self.dict.get('foo'))
+        self.assertEqual('default', self.dict.get('junk', 'default'))
+        self.assertEqual(None, self.dict.get('junk'))
 
     def test_get_does_not_remove_element(self):
         self.dict['foo'] = 'bar'
-        self.assertEquals('bar', self.dict.get('foo'))
-        self.assertEquals('bar', self.dict.get('foo'))
+        self.assertEqual('bar', self.dict.get('foo'))
+        self.assertEqual('bar', self.dict.get('foo'))
 
     def test_contains_works(self):
         self.assertFalse('foo' in self.dict)
@@ -152,7 +150,7 @@ class BaseTest(object):
 
         sevens_dict = self.new_dict(encoding=SevenEncoding)
         sevens_dict['key'] = 'this is not a seven'
-        self.assertEquals('7', sevens_dict.get('key'))
+        self.assertEqual('7', sevens_dict.get('key'))
 
 
 class AutoSyncTrueTest(object):
@@ -167,27 +165,27 @@ class AutoSyncTrueTest(object):
             with mock.patch(self.mockmeth('durables')) as durables:
                 # But the durables have been updated to a new value
                 durables.return_value = dict(updated='durables')
-                self.assertEquals(self.dict, dict(foo='bar'))
+                self.assertEqual(self.dict, dict(foo='bar'))
 
                 # Change the last updated to a high number to expire the cache,
                 # then fetch a new value by calling len() on the dict
                 last_updated.return_value = 8000000000
                 len(self.dict)
-                self.assertEquals(self.dict, dict(updated='durables'))
+                self.assertEqual(self.dict, dict(updated='durables'))
 
 
 class AutoSyncFalseTest(object):
 
     def test_does_not_update_from_durables_on_read(self):
         # Add a key to the dict, which will sync with durables
-        self.assertEquals(self.dict, dict())
+        self.assertEqual(self.dict, dict())
         self.dict['foo'] = 'bar'
 
         # Manually add a value not using the public API
         self.dict.persist('added', 'value')
 
         # And it should not be there
-        self.assertEquals(self.dict, dict(foo='bar'))
+        self.assertEqual(self.dict, dict(foo='bar'))
 
         # Now sync and see that it's updated
         self.dict.sync()
@@ -206,10 +204,10 @@ class RedisTest(object):
     def test_instances_different_keyspaces_do_not_share_last_updated(self):
         self.dict['foo'] = 'bar'
         self.dict['bazzle'] = 'bungie'
-        self.assertEquals(self.dict.last_updated(), 3)
+        self.assertEqual(self.dict.last_updated(), 3)
 
         new_dict = self.new_dict(keyspace='another_one')
-        self.assertNotEquals(self.dict.last_updated(), new_dict.last_updated())
+        self.assertNotEqual(self.dict.last_updated(), new_dict.last_updated())
 
 
 class ModelDictTest(object):
@@ -248,13 +246,13 @@ class ZookeeperDictTest(object):
         event = threading.Event()
         args = (zkdict, value, event)
 
-        thread.start_new_thread(self.set_event_when_updated, args)
+        _thread.start_new_thread(self.set_event_when_updated, args)
 
         event.wait(timeout=5)
         actual = zkdict.last_updated()
         format = 'Gave up waiting for last_updated value of %s, last saw %s'
 
-        self.assertEquals(actual, value, format % (actual, value))
+        self.assertEqual(actual, value, format % (actual, value))
 
         yield
 
@@ -272,11 +270,11 @@ class ZookeeperDictTest(object):
         # ZKDict's child watch sees that change and also updates the
         # last_updated value as well.  This isn't ideal and will get changed.
         with self.wait_for_update_of(other_dict, 5):
-            self.assertEquals(
+            self.assertEqual(
                 self.dict,
                 dict(foo='dict bar', dictkey='dict')
             )
-            self.assertEquals(
+            self.assertEqual(
                 other_dict,
                 dict(foo='other', otherdictkey='otherv')
             )
@@ -284,20 +282,20 @@ class ZookeeperDictTest(object):
     def test_changes_by_one_dict_are_reflected_in_another(self):
         other_dict = ZookeeperDict(keyspace=self.namespace, connection=self.new_client())
 
-        self.assertEquals(other_dict, {})
+        self.assertEqual(other_dict, {})
 
         self.dict['foo'] = 'bar'
         self.dict['baz'] = 'bub'
 
         with self.wait_for_update_of(other_dict, 3):
-            self.assertEquals(other_dict['foo'], 'bar')
-            self.assertEquals(other_dict['baz'], 'bub')
+            self.assertEqual(other_dict['foo'], 'bar')
+            self.assertEqual(other_dict['baz'], 'bub')
 
         self.dict['foo'] = 'changed'
 
         with self.wait_for_update_of(other_dict, 4):
-            self.assertEquals(other_dict['foo'], 'changed')
-            self.assertEquals(other_dict['baz'], 'bub')
+            self.assertEqual(other_dict['foo'], 'changed')
+            self.assertEqual(other_dict['baz'], 'bub')
 
     def test_raises_valueerror_for_keys_with_strings(self):
         self.assertRaises(
@@ -327,11 +325,11 @@ class TestRedisDict(BaseTest, AutoSyncTrueTest, RedisTest, unittest.TestCase):
     def test_persist_saves_to_redis(self):
         self.assertFalse(self.hget('foo'))
         self.dict.persist('foo', 'bar')
-        self.assertEquals(self.dict.encoding.decode(self.hget('foo')), 'bar')
+        self.assertEqual(self.dict.encoding.decode(self.hget('foo')), 'bar')
 
     def test_depersist_removes_it_from_redis(self):
         self.dict['foo'] = 'bar'
-        self.assertEquals(self.dict.encoding.decode(self.hget('foo')), 'bar')
+        self.assertEqual(self.dict.encoding.decode(self.hget('foo')), 'bar')
         self.dict.depersist('foo')
         self.assertFalse(self.hget('foo'))
 
@@ -341,15 +339,15 @@ class TestRedisDict(BaseTest, AutoSyncTrueTest, RedisTest, unittest.TestCase):
 
         new_dict = self.new_dict()
 
-        self.assertEquals(new_dict.durables(), dict(foo='bar', baz='bang'))
+        self.assertEqual(new_dict.durables(), dict(foo='bar', baz='bang'))
 
     def test_last_updated_set_to_1_on_initialize(self):
-        self.assertEquals(self.dict.last_updated(), 1)
+        self.assertEqual(self.dict.last_updated(), 1)
 
     def test_persists_and_last_update_writes_are_atomic(self):
         with mock.patch('redis.Redis.incr') as tlo:
             tlo.side_effect = Exception('boom!')
-            self.assertRaisesRegexp(Exception, 'boom',
+            self.assertRaisesRegex(Exception, 'boom',
                                     self.dict.persist, 'foo', 'bar')
             self.assertFalse(self.hget('foo'))
 
@@ -364,14 +362,14 @@ class TestModelDict(BaseTest, AutoSyncTrueTest, ModelDictTest, unittest.TestCase
 
     def test_can_be_constructed_with_return_instances(self):
         instance = ModelDict(manager=Setting.objects, cache=self.cache, return_instances='ri')
-        self.assertEquals(
+        self.assertEqual(
             instance.return_instances,
             'ri'
         )
 
     def test_persist_saves_model(self):
         self.dict.persist('foo', 'bar')
-        self.assertEquals(self.dict['foo'], 'bar')
+        self.assertEqual(self.dict['foo'], 'bar')
 
     def test_depersist_removes_model(self):
         self.dict.persist('foo', 'bar')
@@ -382,22 +380,22 @@ class TestModelDict(BaseTest, AutoSyncTrueTest, ModelDictTest, unittest.TestCase
     def test_durables_returns_dict_of_models_in_db(self):
         self.dict.persist('foo', 'bar')
         self.dict.persist('buzz', 'bang')
-        self.assertEquals(self.dict.durables(), dict(foo='bar', buzz='bang'))
+        self.assertEqual(self.dict.durables(), dict(foo='bar', buzz='bang'))
 
     def test_last_updated_set_to_1_on_initialize(self):
-        self.assertEquals(self.dict.last_updated(), 1)
+        self.assertEqual(self.dict.last_updated(), 1)
 
     def test_setdefault_does_not_update_last_updated_if_key_exists(self):
         self.dict.persist('foo', 'bar')
         before = self.dict.last_updated()
 
         self.dict.setdefault('foo', 'notset')
-        self.assertEquals(before, self.dict.last_updated())
+        self.assertEqual(before, self.dict.last_updated())
 
     def test_instances_true_returns_the_whole_object_at_they_key(self):
         self.dict.persist('foo', 'bar')
         self.dict.return_instances = True
-        self.assertEquals(self.dict['foo'], Setting.objects.get(key='foo'))
+        self.assertEqual(self.dict['foo'], Setting.objects.get(key='foo'))
 
     def test_touch_last_updated_inc_cache(self):
         self.dict.cache = mock.Mock()
@@ -406,14 +404,14 @@ class TestModelDict(BaseTest, AutoSyncTrueTest, ModelDictTest, unittest.TestCase
 
     def test_resets_last_update_if_value_is_deleted(self):
         self.dict.persist('foo', 'bar')
-        self.assertEquals(self.dict['foo'], 'bar')
+        self.assertEqual(self.dict['foo'], 'bar')
 
         self.dict.cache.delete(self.dict.cache_key)
 
         self.dict.persist('baz', 'fizzle')
-        self.assertEquals(self.dict['foo'], 'bar')
-        self.assertEquals(self.dict['baz'], 'fizzle')
-        self.assertEquals(
+        self.assertEqual(self.dict['foo'], 'bar')
+        self.assertEqual(self.dict['baz'], 'fizzle')
+        self.assertEqual(
             self.dict.cache.get(self.dict.cache_key),
             self.dict.LAST_UPDATED_MISSING_INCREMENT + 2  # for 2 updates
         )
@@ -428,7 +426,7 @@ class TestMemoryDict(BaseTest, AutoSyncTrueTest, unittest.TestCase):
         obj = object()
         self.dict['foo'] = obj
 
-        self.assertEquals(self.dict.values(), [obj])
+        self.assertEqual(list(self.dict.values()), [obj])
 
 
 class TestZookeeperDict(BaseTest, KazooTestCase, ZookeeperDictTest, unittest.TestCase):

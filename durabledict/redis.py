@@ -1,8 +1,9 @@
+import six
+
 from durabledict.base import ConnectionDurableDict
 
 
 class RedisDict(ConnectionDurableDict):
-
     """
     Dictionary-style access to a redis hash table. Populates a cache and a local
     in-memory to avoid multiple hits to the database.
@@ -27,7 +28,7 @@ class RedisDict(ConnectionDurableDict):
 
     def durables(self):
         encoded = self.connection.hgetall(self.keyspace)
-        tuples = [(k, self.encoding.decode(v)) for k, v in encoded.items()]
+        tuples = [(k, self.encoding.decode(v)) for k, v in six.iteritems(encoded)]
         return dict(tuples)
 
     def last_updated(self):

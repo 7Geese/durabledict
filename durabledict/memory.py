@@ -1,13 +1,14 @@
+import six
+
 from durabledict.base import DurableDict
 from durabledict.encoding import NoOpEncoding
 
 
 class MemoryDict(DurableDict):
-
-    '''
+    """
     Does not actually persist any data to a persistant storage.  Instead, keeps
     everything in memory.  This is really only useful for use in tests
-    '''
+    """
 
     def __init__(self, autosync=True, encoding=NoOpEncoding, *args, **kwargs):
         self.__storage = dict()
@@ -24,7 +25,7 @@ class MemoryDict(DurableDict):
         self.__last_updated += 1
 
     def durables(self):
-        encoded_tuples = self.__storage.items()
+        encoded_tuples = six.iteritems(self.__storage)
         tuples = [(k, self.encoding.decode(v)) for k, v in encoded_tuples]
         return dict(tuples)
 
