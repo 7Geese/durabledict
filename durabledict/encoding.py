@@ -56,11 +56,11 @@ class PickleEncoding(Encoder):
     @staticmethod
     def encoder(data):
         pickled = pickle.dumps(data, pickle.HIGHEST_PROTOCOL)
-        return base64.encodestring(pickled)
+        return base64.b64encode(pickled)
 
     @staticmethod
     def decoder(data):
-        pickled = base64.decodestring(data)
+        pickled = base64.b64decode(data)
         return pickle.loads(pickled)
 
 
