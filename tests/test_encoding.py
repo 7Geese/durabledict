@@ -1,15 +1,12 @@
 # coding=utf-8
 
+from __future__ import absolute_import, division, print_function
+
 import unittest
+
 from mock import Mock
 
-from durabledict.encoding import (
-    NoOpEncoding,
-    PickleEncoding,
-    JSONEncoding,
-    EncodingError,
-    DecodingError,
-)
+from durabledict.encoding import DecodingError, EncodingError, JSONEncoding, NoOpEncoding, PickleEncoding
 
 
 class EncodingTest(object):

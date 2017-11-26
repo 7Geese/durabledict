@@ -1,6 +1,8 @@
+from __future__ import absolute_import, division, print_function
+
+import glob
 import os
 import sys
-import glob
 
 
 def get_zookeeper_paths():

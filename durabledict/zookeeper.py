@@ -1,7 +1,9 @@
-from durabledict.base import ConnectionDurableDict
+from __future__ import absolute_import, division, print_function
 
-from functools import wraps
 import posixpath
+from functools import wraps
+
+from durabledict.base import ConnectionDurableDict
 
 
 def validate_key(func):

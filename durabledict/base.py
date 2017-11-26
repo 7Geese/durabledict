@@ -1,7 +1,6 @@
-from durabledict.encoding import (
-    DefaultEncoding,
-    EncodingError,
-)
+from __future__ import absolute_import, division, print_function
+
+from durabledict.encoding import DefaultEncoding, EncodingError
 
 
 class DurableDict(object):

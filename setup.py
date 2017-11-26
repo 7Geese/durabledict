@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from setuptools import setup
+from __future__ import absolute_import, division, print_function
 
+from setuptools import setup
 
 try:
     import multiprocessing  # Seems to fix http://bugs.python.org/issue15881
