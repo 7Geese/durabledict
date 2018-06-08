@@ -30,7 +30,7 @@ class RedisDict(ConnectionDurableDict):
 
     def durables(self):
         encoded = self.connection.hgetall(self.keyspace)
-        tuples = [(k, self.encoding.decode(v)) for k, v in six.iteritems(encoded)]
+        tuples = [(k.decode('utf-8'), self.encoding.decode(v)) for k, v in six.iteritems(encoded)]
         return dict(tuples)
 
     def last_updated(self):
