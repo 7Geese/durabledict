@@ -55,7 +55,9 @@ class PickleEncoding(Encoder):
 
     @staticmethod
     def encoder(data):
-        pickled = pickle.dumps(data, pickle.HIGHEST_PROTOCOL)
+        # 2 is the highest protocol version in python 2. Let's use that for the migration.
+        # Can switch this back to `pickle.HIGHEST_PROTOCOL` later
+        pickled = pickle.dumps(data, protocol=2)
         return base64.b64encode(pickled)
 
     @staticmethod
