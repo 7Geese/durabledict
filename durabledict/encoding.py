@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import base64
 import json
 import pickle
+import sys
 
 
 class EncoderError(ValueError):
@@ -63,7 +64,8 @@ class PickleEncoding(Encoder):
     @staticmethod
     def decoder(data):
         pickled = base64.b64decode(data)
-        return pickle.loads(pickled)
+        kwargs = {'encoding': 'latin1'} if sys.version_info[0] > 2 else {}
+        return pickle.loads(pickled, **kwargs)
 
 
 class JSONEncoding(Encoder):
